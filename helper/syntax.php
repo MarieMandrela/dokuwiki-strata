@@ -274,7 +274,7 @@ class helper_plugin_strata_syntax extends DokuWiki_Plugin {
                         $this->_fail(sprintf($this->getLang('error_query_sortvar'),utf8_tohtml(hsc($var->name))), $line);
                     }
 
-                    $result['ordering'][] = array('variable'=>$var->name, 'direction'=>($match[2]?:'asc'));
+                    $result['ordering'][] = array('variable'=>$var->name, 'direction'=>($match[2]?$match[2]:'asc'));
                 } else {
                     $this->_fail(sprintf($this->getLang('error_query_sortline'), utf8_tohtml(hsc($line['text']))), $line);
                 }
@@ -793,7 +793,7 @@ class helper_plugin_strata_syntax extends DokuWiki_Plugin {
                 $tag = utf8_trim($tag);
 
                 $stack[$top]['cs'][] = array(
-                    'tag'=>$tag?:null,
+                    'tag'=>$tag?$tag:null,
                     'cs'=>array(),
                     'start'=>$lineCount,
                     'end'=>0
@@ -996,11 +996,17 @@ class helper_plugin_strata_syntax extends DokuWiki_Plugin {
         if (!isset($properties[$variable])) {
             // Unknown property: show error
             $property_title_values = $this->getLang('property_title_values');
-            $propertyList = implode(array_map(function($n, $p) use($property_title_values) {
-                $values = implode(array_map(function($c) { return $c[0]; }, $p['choices']), ', ');
+            $propertyList = array();
+            foreach($properties as $n => $p) {
+                $values = array();
+                foreach($p['choices'] as $c) {
+                    $values[] = $c[0];
+                }
+                $values = implode($values,', ');
                 $title = sprintf($property_title_values, $values);
-                return '\'<code title="' . hsc($title) . '">' . hsc($n) . '</code>\'';
-            }, array_keys($properties), $properties), ', ');
+                $propertyList[] = '\'<code title="' . hsc($title) . '">' . hsc($n) . '</code>\'';
+            }
+            $propertyList = implode($propertyList, ', ');
             $this->emitError($region, 'error_property_unknownproperty', hsc($group), hsc($variable), $propertyList);
         } else if (isset($propertyValues[$variable])) {
             // Property is specified more than once: show error
@@ -1053,10 +1059,18 @@ class helper_plugin_strata_syntax extends DokuWiki_Plugin {
                         $this->emitError($region, 'error_property_invalidchoice', hsc($group), hsc($variable), hsc($v), implode($choicesInfo, ', '));
                     }
                 } else {
-                    $propertyValues[$variable] = array_map(function($v) use ($choices) { return $choices[$v]; }, $values);
+                    $_mapped_values = array();
+                    foreach($values as $v) {
+                        $_mapped_values[] = $choices[$v];
+                    }
+                    $propertyValues[$variable] = $_mapped_values;
                 }
             } else if (isset($p['pattern'])) { // Check whether the given property values match the pattern
-                $incorrect = array_filter($values, function($v) use ($p) { return !preg_match($p['pattern'], $v); });
+                $incorrect = array();
+                foreach($values as $v) {
+                    if(!preg_match($p['pattern'], $v)) continue;
+                    $incorrect[] = $v;
+                }
                 if (count($incorrect) > 0) {
                     foreach (array_unique($incorrect) as $v) {
                         if (isset($p['pattern_desc'])) {

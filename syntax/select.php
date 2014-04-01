@@ -310,15 +310,15 @@ class syntax_plugin_strata_select extends DokuWiki_Syntax_Plugin {
         }
 
         $classes = implode(' ', array_merge($c, $additionalClasses));
-        $properties = implode(' ', array_map(
-            function($k, $v) {
-                if (empty($v)) {
-                    return '';
-                } else {
-                    return 'data-strata-ui-' . $k . '="' . implode($v) . '"';
-                }
-            }, array_keys($p), $p)
-        );
+        $properties = array();
+        foreach($p as $k=>$v) {
+            if (empty($v)) {
+                $properties[] = '';
+            } else {
+                $properties[] = 'data-strata-ui-' . $k . '="' . implode($v) . '"';
+            }
+        }
+        $properties = implode(' ',$properties);
 
         $R->doc .= '<div class="' . $classes . '" ' . $properties . '>' . DOKU_LF;
     }

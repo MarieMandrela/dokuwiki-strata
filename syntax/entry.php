@@ -122,7 +122,7 @@ class syntax_plugin_strata_entry extends DokuWiki_Syntax_Plugin {
                     if(!isset($type) || $type == '') {
                         list($type, $hint) = $this->util->getDefaultType();
                     }
-                    $result['data'][$property][] = array('value'=>$v,'type'=>$type,'hint'=>($hint?:null));
+                    $result['data'][$property][] = array('value'=>$v,'type'=>$type,'hint'=>($hint?$hint:null));
                 }
             } else {
                 msg(sprintf($this->syntax->getLang('error_entry_line'), utf8_tohtml(hsc($line))),-1);
